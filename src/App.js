@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import MoviesList from "./components/MoviesList";
 import "./App.css";
 
@@ -7,7 +7,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchMovieHandler = async () => {
+  const fetchMovies = async () => {
     setError(null);
     setIsLoading(true);
 
@@ -29,22 +29,32 @@ function App() {
       });
 
       setMovies(updatedMovies);
-      setIsLoading(false);
     } catch (error) {
       setError(error.message);
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
-  const cancelRetryHandler = () => {
+  const fetchMoviesMemoized = useMemo(() => fetchMovies, []);
+
+  useEffect(() => {
+    fetchMoviesMemoized();
+  }, [fetchMoviesMemoized]);
+
+  const cancelRetryHandler = useCallback(() => {
     setIsLoading(false);
     setError(null);
-  };
+  }, []);
 
   return (
     <React.Fragment>
       <section>
-        <button onClick={fetchMovieHandler}>Fetch Movies</button>
+        {isLoading ? (
+          <p>...Loading</p>
+        ) : (
+          <button onClick={fetchMoviesMemoized}>Fetch Movies</button>
+        )}
         {isLoading && (
           <button onClick={cancelRetryHandler}>Cancel Retry</button>
         )}
@@ -54,7 +64,6 @@ function App() {
         {!isLoading && movies.length > 0 && <MoviesList movies={movies} />}
         {!isLoading && movies.length === 0 && <p>Movie Not Found</p>}
         {!isLoading && error && <p>{error}</p>}
-        {isLoading && <p>...Loading</p>}
       </section>
     </React.Fragment>
   );
